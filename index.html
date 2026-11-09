@@ -85,7 +85,6 @@ button.primary:disabled{opacity:.6;cursor:progress}
 <div class="wrap">
   <header>
     <h1>Lift Layout <span>Drawing</span></h1>
-    <p>Enter the clear dimensions in millimetres. The drawing updates as you type and exports as a print-ready PNG sized for the box on the quotation sheet.</p>
   </header>
 
   <div class="grid">
@@ -144,7 +143,6 @@ button.primary:disabled{opacity:.6;cursor:progress}
         <span class="note">Right-click the image (long-press on a phone) and choose Save image.</span>
         <img id="fbImg" alt="Generated lift layout drawing">
       </div>
-      <p class="note">The values loaded are an example. The PNG carries its dpi, so in Word it inserts at exactly the box size you set. The plan view is drawn to scale; the door and cabin views are each scaled to fit their space.</p>
     </section>
   </div>
 </div>
@@ -242,8 +240,9 @@ function title(text, cx, bottom, maxW){
   if('letterSpacing' in C) C.letterSpacing = '0px';
 }
 function fit(a, mw, mh, L, R, T, B){
-  const k = Math.min((a.w - L - R) / mw, (a.h - T - B) / mh);
-  return { k, ox: a.x + L + ((a.w - L - R) - mw * k) / 2, oy: a.y + T + ((a.h - T - B) - mh * k) / 2 };
+  const M = Math.max(L, R);
+  const k = Math.min((a.w - 2 * M) / mw, (a.h - T - B) / mh);
+  return { k, ox: a.x + (a.w - mw * k) / 2, oy: a.y + T + ((a.h - T - B) - mh * k) / 2 };
 }
 /* door leaves in plan, drawn in the wall opening */
 function planLeaves(gx, gw, y, ph, dir){
@@ -252,12 +251,26 @@ function planLeaves(gx, gw, y, ph, dir){
   else { rect(gx, yy, gw * 0.55, ph, COL.door, 0.2 * U); rect(gx + gw * 0.45, yy + dir * ph, gw * 0.55, ph, COL.door, 0.2 * U); }
 }
 
+/* entrance marker: arrow pointing into the shaft opening; dir 1 = from below, -1 = from above */
+function entry(xc, yWall, dir, label){
+  const tip = yWall + dir * 0.3 * FS, tail = tip + dir * 1.55 * FS;
+  ln(xc, tail, xc, tip + dir * 0.6 * FS, 0.45 * U, COL.dim);
+  arrowHead(xc, tip, dir > 0 ? -Math.PI / 2 : Math.PI / 2, COL.dim, 1.35);
+  C.font = font(600, 0.82); C.fillStyle = COL.dim; C.textAlign = 'left'; C.textBaseline = 'middle';
+  if('letterSpacing' in C) C.letterSpacing = `${0.06 * FS}px`;
+  const lw = C.measureText(label).width, ly = (tip + tail) / 2, lx = xc + 0.55 * FS;
+  C.fillStyle = '#ffffff'; C.fillRect(lx - 0.15 * FS, ly - 0.5 * FS, lw + 0.3 * FS, FS);
+  C.fillStyle = COL.dim; C.fillText(label, lx, ly);
+  if('letterSpacing' in C) C.letterSpacing = '0px';
+}
+
 /* ---------- view 1: shaft plan ---------- */
 function drawPlan(a){
   const s = ST, thr = s.opening === 'through';
   const t = 0.07 * Math.max(s.sw, s.sd, 1);
   const Ls = labels(s.sd), wD = tw(Ls), Lc = labels(s.cd), wC = tw(Lc);
-  const { k, ox, oy } = fit(a, s.sw + 2 * t, s.sd + 2 * t, 1.3 * FS + wC, 1.3 * FS + wD, (thr ? 2 : 1) * ROWH, ROWH);
+  const EH = 2.1 * FS;
+  const { k, ox, oy } = fit(a, s.sw + 2 * t, s.sd + 2 * t, 1.3 * FS + wC, 1.3 * FS + wD, ROWH + (thr ? EH : 0), EH);
   if(!(k > 0)) return;
   const Tk = t * k, ix = ox + Tk, iy = oy + Tk, iw = s.sw * k, ih = s.sd * k, OW = iw + 2 * Tk, OH = ih + 2 * Tk;
   const cwF = s.cw * k, cdF = s.cd * k, fX = iw - cwF, fY = ih - cdF;
@@ -285,13 +298,10 @@ function drawPlan(a){
   }
 
   // dimensions
-  const rowLine = i => oy - i * ROWH - 0.45 * FS;
-  if(thr){
-    dimH(rgx, rgx + rgw, rowLine(0), 'above', labels(s.rdw), [[rgx, oy], [rgx + rgw, oy]]);
-    dimH(ix, ix + iw, rowLine(1), 'above', labels(s.sw), [[ix, iy], [ix + iw, iy]]);
-  } else dimH(ix, ix + iw, rowLine(0), 'above', labels(s.sw), [[ix, iy], [ix + iw, iy]]);
+  dimH(ix, ix + iw, oy - (thr ? EH : 0) - 0.45 * FS, 'above', labels(s.sw), [[ix, iy], [ix + iw, iy]]);
   dimV(ox + OW + 0.7 * FS, iy, iy + ih, 'right', Ls, [[ix + iw, iy], [ix + iw, iy + ih]]);
-  dimH(fgx, fgx + fgw, oy + OH + 0.45 * FS, 'below', labels(s.dw), [[fgx, oy + OH], [fgx + fgw, oy + OH]]);
+  entry(fgx + fgw / 2, oy + OH, 1, thr ? 'FRONT ENTRANCE' : 'ENTRANCE');
+  if(thr) entry(rgx + rgw / 2, oy, -1, 'REAR ENTRANCE');
   dimH(cx, cx + cwF, cy + 0.75 * FS, 'below', labels(s.cw), null);
   dimV(ox - 0.7 * FS, cy, cy + cdF, 'left', Lc, [[cx, cy], [cx, cy + cdF]]);
 }
@@ -352,7 +362,7 @@ function render(ctx, u, s){
   const pad = 1.2 * u, gap = 2.5 * u, titleH = FS * 1.9;
   let panels;
   if(s.layout === 'row'){
-    const wts = [0.40, 0.25, 0.35], av = W - 2 * pad - 2 * gap; let x = pad;
+    const wts = [0.37, 0.30, 0.33], av = W - 2 * pad - 2 * gap; let x = pad;
     panels = wts.map(f => { const p = { x, y: pad, w: av * f, h: H - 2 * pad }; x += av * f + gap; return p; });
   } else {
     const ah = (H - 2 * pad - 2 * gap) / 3;
