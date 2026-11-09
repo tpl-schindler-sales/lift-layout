@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+<title>Lift Layout Drawing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: two-column workbench — dimension inputs on the left, the white drawing sheet on the right; stacks to one column on phones */
+:root{
+  --bg:#eef0f3; --panel:#ffffff; --ink:#1a1e23; --muted:#5b6570; --line:#d7dbe0;
+  --accent:#c23a2f; --accent-ink:#ffffff; --field:#f7f8fa;
+  --warn:#8a5200; --warn-bg:#fff3dc; --ok:#1f6b45; --paper:#ffffff; --shadow:rgba(24,34,46,.12);
+  --f-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-cond:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171b; --panel:#1d2126; --ink:#e7e9ec; --muted:#9aa3ad; --line:#323940;
+  --accent:#e0564b; --accent-ink:#ffffff; --field:#161a1e;
+  --warn:#f2b866; --warn-bg:#3a2c15; --ok:#6fd19c; --paper:#ffffff; --shadow:rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171b; --panel:#1d2126; --ink:#e7e9ec; --muted:#9aa3ad; --line:#323940;
+  --accent:#e0564b; --accent-ink:#ffffff; --field:#161a1e;
+  --warn:#f2b866; --warn-bg:#3a2c15; --ok:#6fd19c; --paper:#ffffff; --shadow:rgba(0,0,0,.5); color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:14px;line-height:1.45}
+.wrap{max-width:1260px;margin:0 auto;padding-block:22px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px;margin-bottom:18px}
+h1{font-family:var(--f-cond);font-weight:600;font-size:26px;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+header p{margin:0;color:var(--muted);max-width:60ch}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+form{display:flex;flex-direction:column}
+fieldset{border:0;margin:0;padding:14px 16px 16px;border-top:1px solid var(--line);display:grid;gap:10px}
+fieldset:first-child{border-top:0}
+legend{float:left;width:100%;padding:0;margin-bottom:2px;font-family:var(--f-cond);font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.field{display:grid;grid-template-columns:minmax(0,1fr) 128px;align-items:center;gap:2px 10px}
+.field label{font-weight:500}
+.field output{grid-column:2;font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.inp{display:flex;align-items:center;background:var(--field);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.inp:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.inp input{all:unset;box-sizing:border-box;width:100%;min-width:0;padding:7px 4px 7px 10px;font-family:var(--f-mono);font-size:14px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.inp span{padding:0 9px 0 4px;color:var(--muted);font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sel{display:grid;gap:4px}
+.sel label{font-weight:500}
+select,input[type=text]{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;box-sizing:border-box}
+select:focus-visible,input[type=text]:focus-visible,input[type=range]:focus-visible,button:focus-visible,input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.check{display:flex;align-items:center;gap:8px}
+.range{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center}
+.range label{grid-column:1/-1;font-weight:500}
+.range output{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+input[type=range]{accent-color:var(--accent);width:100%}
+
+.preview{display:flex;flex-direction:column;gap:14px;min-width:0}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;padding:12px 16px}
+.meta{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.meta b{color:var(--ink);font-weight:500}
+button.primary{font:600 14px var(--f-ui);background:var(--accent);color:var(--accent-ink);border:0;border-radius:7px;padding:10px 18px;cursor:pointer}
+button.primary:hover{filter:brightness(1.07)}
+button.primary:disabled{opacity:.6;cursor:progress}
+.stage{padding:22px;background:repeating-linear-gradient(45deg,transparent 0 9px,color-mix(in srgb,var(--line) 45%,transparent) 9px 10px);border-radius:0 0 10px 10px;border-top:1px solid var(--line)}
+.sheet{background:var(--paper);box-shadow:0 1px 2px var(--shadow),0 8px 24px var(--shadow);outline:1px dashed #9aa3ad;outline-offset:4px}
+.sheet canvas{display:block;width:100%}
+.status{min-height:1.4em;font-size:13px;color:var(--muted)}
+.status.ok{color:var(--ok)}
+.warns{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.warns li{background:var(--warn-bg);color:var(--warn);border-radius:6px;padding:7px 10px;font-size:13px}
+.fallback{padding:14px 16px;display:grid;gap:10px}
+.fallback img{max-width:100%;border:1px solid var(--line);background:#fff}
+.note{color:var(--muted);font-size:13px;padding:0 2px;max-width:70ch}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1>Lift Layout <span>Drawing</span></h1>
+    <p>Enter the clear dimensions in millimetres. The drawing updates as you type and exports as a print-ready PNG sized for the box on the quotation sheet.</p>
+  </header>
+
+  <div class="grid">
+    <form class="card" id="form" autocomplete="off">
+      <fieldset>
+        <legend>Shaft (hoistway)</legend>
+        <div class="field"><label for="sw">Shaft width</label><div class="inp"><input id="sw" type="number" inputmode="numeric" min="0" step="10" value="1900"><span>mm</span></div><output data-for="sw"></output></div>
+        <div class="field"><label for="sd">Shaft depth</label><div class="inp"><input id="sd" type="number" inputmode="numeric" min="0" step="10" value="1950"><span>mm</span></div><output data-for="sd"></output></div>
+      </fieldset>
+      <fieldset>
+        <legend>Car cabin (inside)</legend>
+        <div class="field"><label for="cw">Car width</label><div class="inp"><input id="cw" type="number" inputmode="numeric" min="0" step="10" value="1100"><span>mm</span></div><output data-for="cw"></output></div>
+        <div class="field"><label for="cd">Car depth</label><div class="inp"><input id="cd" type="number" inputmode="numeric" min="0" step="10" value="1400"><span>mm</span></div><output data-for="cd"></output></div>
+        <div class="field"><label for="ch">Cabin height</label><div class="inp"><input id="ch" type="number" inputmode="numeric" min="0" step="10" value="2200"><span>mm</span></div><output data-for="ch"></output></div>
+      </fieldset>
+      <fieldset>
+        <legend>Doors &amp; opening</legend>
+        <div class="sel"><label for="opening">Entrance</label>
+          <select id="opening"><option value="single">Single entrance (front)</option><option value="through">Dual entrance (front &amp; rear)</option></select></div>
+        <div class="sel"><label for="doorType">Door type</label>
+          <select id="doorType"><option value="center">Centre opening (C2)</option><option value="side">Side opening (T2)</option></select></div>
+        <div class="field"><label for="dw">Door width</label><div class="inp"><input id="dw" type="number" inputmode="numeric" min="0" step="10" value="800"><span>mm</span></div><output data-for="dw"></output></div>
+        <div class="field"><label for="dh">Door height</label><div class="inp"><input id="dh" type="number" inputmode="numeric" min="0" step="10" value="2100"><span>mm</span></div><output data-for="dh"></output></div>
+        <div class="field" id="rdwField" hidden><label for="rdw">Rear door width</label><div class="inp"><input id="rdw" type="number" inputmode="numeric" min="0" step="10" value="800"><span>mm</span></div><output data-for="rdw"></output></div>
+      </fieldset>
+      <fieldset>
+        <legend>Output</legend>
+        <div class="sel"><label for="units">Dimension labels</label>
+          <select id="units"><option value="both">mm and ft-in</option><option value="mm">mm only</option><option value="ft">ft-in only</option></select></div>
+        <div class="sel"><label for="layout">Arrangement</label>
+          <select id="layout"><option value="row">Side by side, aligned</option><option value="stack">Stacked top to bottom</option></select></div>
+        <div class="two">
+          <div class="sel"><label for="boxW">Box width</label><div class="inp"><input id="boxW" type="number" min="20" step="1" value="175"><span>mm</span></div></div>
+          <div class="sel"><label for="boxH">Box height</label><div class="inp"><input id="boxH" type="number" min="20" step="1" value="48"><span>mm</span></div></div>
+        </div>
+        <div class="sel"><label for="dpi">Resolution</label>
+          <select id="dpi"><option value="300">300 dpi (print)</option><option value="600">600 dpi (extra sharp)</option></select></div>
+        <div class="range"><label for="fs">Label size</label><input id="fs" type="range" min="1.8" max="3.8" step="0.1" value="2.7"><output id="fsOut">2.7 mm</output></div>
+        <label class="check"><input type="checkbox" id="border"> Draw a border round the image</label>
+        <div class="sel"><label for="ref">Project reference (file name only)</label><input id="ref" type="text" placeholder="e.g. Kandy apartment Q-2611"></div>
+      </fieldset>
+    </form>
+
+    <section class="preview">
+      <div class="card">
+        <div class="bar">
+          <div class="meta" id="meta"></div>
+          <button class="primary" id="dl" type="button">Download PNG</button>
+        </div>
+        <div class="stage"><div class="sheet" id="sheet"><canvas id="cv" aria-label="Lift layout drawing preview"></canvas></div></div>
+      </div>
+      <div class="status" id="status" role="status"></div>
+      <ul class="warns" id="warns"></ul>
+      <div class="card fallback" id="fallback" hidden>
+        <strong>Your image is ready</strong>
+        <span class="note">Right-click the image (long-press on a phone) and choose Save image.</span>
+        <img id="fbImg" alt="Generated lift layout drawing">
+      </div>
+      <p class="note">The values loaded are an example. The PNG carries its dpi, so in Word it inserts at exactly the box size you set. The plan view is drawn to scale; the door and cabin views are each scaled to fit their space.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const IDS = ['sw','sd','cw','cd','ch','dw','dh','rdw','opening','doorType','units','layout','boxW','boxH','dpi','fs','border','ref'];
+const KEY = 'liftLayout.v1';
+
+/* ---------- units ---------- */
+const FR = ['', '⅛', '¼', '⅜', '½', '⅝', '¾', '⅞'];
+function ftin(mm){
+  const e = Math.round(mm / 25.4 * 8);
+  const ft = Math.floor(e / 96), rem = e - ft * 96;
+  return `${ft}'-${Math.floor(rem / 8)}${FR[rem % 8]}"`;
+}
+const fmtMm = mm => `${Math.round(mm)} mm`;
+
+/* ---------- state ---------- */
+function getS(){
+  const n = (id, min = 0) => Math.max(min, parseFloat($(id).value) || 0);
+  return {
+    sw:n('sw'), sd:n('sd'), cw:n('cw'), cd:n('cd'), ch:n('ch'), dw:n('dw'), dh:n('dh'), rdw:n('rdw'),
+    opening:$('opening').value, doorType:$('doorType').value,
+    units:$('units').value, layout:$('layout').value,
+    boxW:n('boxW', 20), boxH:n('boxH', 15), dpi:+$('dpi').value, fs:+$('fs').value,
+    border:$('border').checked, ref:$('ref').value.trim()
+  };
+}
+function saveState(){
+  try{ const o = {}; IDS.forEach(id => o[id] = $(id).type === 'checkbox' ? $(id).checked : $(id).value); localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){}
+}
+function loadState(){
+  try{ const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if(!o) return;
+    if(parseFloat(o.fs) < 2.5) delete o.fs;
+    IDS.forEach(id => { if(o[id] === undefined) return; if($(id).type === 'checkbox') $(id).checked = !!o[id]; else $(id).value = o[id]; });
+  }catch(e){}
+}
+
+/* ---------- drawing primitives (all sizes in canvas px; U = px per paper mm) ---------- */
+let C, U, FS, LH, TB, ROWH, ST;
+const COL = { geo:'#121519', dim:'#1b3d6b', txt:'#121519', txt2:'#1f262e', hatch:'#7a828c',
+  car:'#f1f3f5', door:'#e4e8ec', frame:'#c6ccd3', side:'#d3d8dd', top:'#e7eaed', front:'#f6f7f8', cwt:'#dfe3e7' };
+const font = (w, sc = 1) => `${w} ${FS * sc}px "IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif`;
+const labels = mm => ST.units === 'both' ? [fmtMm(mm), ftin(mm)] : ST.units === 'mm' ? [fmtMm(mm)] : [ftin(mm)];
+
+function ln(x1, y1, x2, y2, lw, col, dash){
+  C.beginPath(); C.setLineDash(dash || []); C.lineWidth = lw; C.strokeStyle = col;
+  C.moveTo(x1, y1); C.lineTo(x2, y2); C.stroke(); C.setLineDash([]);
+}
+function arrowHead(x, y, ang, col = COL.dim, sc = 1){
+  const a = FS * 0.6 * sc, b = a * 0.3;
+  C.save(); C.translate(x, y); C.rotate(ang); C.beginPath();
+  C.moveTo(0, 0); C.lineTo(-a, b); C.lineTo(-a, -b); C.closePath(); C.fillStyle = col; C.fill(); C.restore();
+}
+function tw(lines){
+  return Math.max(...lines.map((t, i) => { C.font = font(i === 0 ? 600 : 500); return C.measureText(t).width; }));
+}
+function txt(lines, x, top, align){
+  C.textAlign = align; C.textBaseline = 'top';
+  lines.forEach((t, i) => { C.font = font(i === 0 ? 600 : 500); C.fillStyle = i === 0 ? COL.txt : COL.txt2; C.fillText(t, x, top + i * LH); });
+}
+function rect(x, y, w, h, fill, lw = 0.35 * U, col = COL.geo){
+  if(fill){ C.fillStyle = fill; C.fillRect(x, y, w, h); }
+  if(lw){ C.lineWidth = lw; C.strokeStyle = col; C.strokeRect(x, y, w, h); }
+}
+function poly(pts, fill){
+  C.beginPath(); pts.forEach(([x, y], i) => i ? C.lineTo(x, y) : C.moveTo(x, y)); C.closePath();
+  if(fill){ C.fillStyle = fill; C.fill(); }
+  C.lineWidth = 0.35 * U; C.strokeStyle = COL.geo; C.lineJoin = 'round'; C.stroke();
+}
+function hatch(x, y, w, h, sp){
+  for(let i = -h; i < w; i += sp) ln(x + i, y + h, x + i + h, y, 0.11 * U, COL.hatch);
+}
+/* horizontal dimension; ext = [[x, yFrom], ...] */
+function dimH(x1, x2, y, side, lines, ext){
+  const lw = 0.16 * U;
+  if(ext) ext.forEach(([x, yf]) => { const d = Math.sign(y - yf) || 1; ln(x, yf + d * 0.25 * FS, x, y + d * 0.35 * FS, lw, COL.dim); });
+  ln(x1, y, x2, y, lw, COL.dim); arrowHead(x1, y, Math.PI); arrowHead(x2, y, 0);
+  txt(lines, (x1 + x2) / 2, side === 'above' ? y - 0.22 * FS - TB : y + 0.22 * FS, 'center');
+}
+/* vertical dimension; ext = [[xFrom, y], ...]; text sits horizontally beside the line */
+function dimV(x, y1, y2, side, lines, ext, top){
+  const lw = 0.16 * U;
+  if(ext) ext.forEach(([xf, y]) => { const d = Math.sign(x - xf) || 1; ln(xf + d * 0.25 * FS, y, x + d * 0.35 * FS, y, lw, COL.dim); });
+  ln(x, y1, x, y2, lw, COL.dim); arrowHead(x, y1, -Math.PI / 2); arrowHead(x, y2, Math.PI / 2);
+  const t = top ?? ((y1 + y2) / 2 - TB / 2);
+  side === 'right' ? txt(lines, x + 0.4 * FS, t, 'left') : txt(lines, x - 0.4 * FS, t, 'right');
+}
+function title(text, cx, bottom, maxW){
+  let sc = 0.92; C.font = font(600, sc);
+  if('letterSpacing' in C) C.letterSpacing = `${0.09 * FS}px`;
+  let w = C.measureText(text).width; if(w > maxW){ sc *= maxW / w; C.font = font(600, sc); }
+  C.fillStyle = COL.txt; C.textAlign = 'center'; C.textBaseline = 'alphabetic'; C.fillText(text, cx, bottom);
+  if('letterSpacing' in C) C.letterSpacing = '0px';
+}
+function fit(a, mw, mh, L, R, T, B){
+  const k = Math.min((a.w - L - R) / mw, (a.h - T - B) / mh);
+  return { k, ox: a.x + L + ((a.w - L - R) - mw * k) / 2, oy: a.y + T + ((a.h - T - B) - mh * k) / 2 };
+}
+/* door leaves in plan, drawn in the wall opening */
+function planLeaves(gx, gw, y, ph, dir){
+  const yy = dir > 0 ? y : y - ph;
+  if(ST.doorType === 'center'){ rect(gx, yy, gw / 2, ph, COL.door, 0.2 * U); rect(gx + gw / 2, yy, gw / 2, ph, COL.door, 0.2 * U); }
+  else { rect(gx, yy, gw * 0.55, ph, COL.door, 0.2 * U); rect(gx + gw * 0.45, yy + dir * ph, gw * 0.55, ph, COL.door, 0.2 * U); }
+}
+
+/* ---------- view 1: shaft plan ---------- */
+function drawPlan(a){
+  const s = ST, thr = s.opening === 'through';
+  const t = 0.07 * Math.max(s.sw, s.sd, 1);
+  const Ls = labels(s.sd), wD = tw(Ls), Lc = labels(s.cd), wC = tw(Lc);
+  const { k, ox, oy } = fit(a, s.sw + 2 * t, s.sd + 2 * t, 1.3 * FS + wC, 1.3 * FS + wD, (thr ? 2 : 1) * ROWH, ROWH);
+  if(!(k > 0)) return;
+  const Tk = t * k, ix = ox + Tk, iy = oy + Tk, iw = s.sw * k, ih = s.sd * k, OW = iw + 2 * Tk, OH = ih + 2 * Tk;
+  const cwF = s.cw * k, cdF = s.cd * k, fX = iw - cwF, fY = ih - cdF;
+  const cx = ix + fX / 2, cy = iy + fY / 2;
+
+  // walls
+  C.save(); C.beginPath(); C.rect(ox, oy, OW, OH); C.rect(ix, iy, iw, ih); C.clip('evenodd'); hatch(ox, oy, OW, OH, 0.75 * U); C.restore();
+  rect(ox, oy, OW, OH, null, 0.4 * U); rect(ix, iy, iw, ih, null, 0.4 * U);
+
+  // openings
+  const fgw = s.dw * k, fgx = cx + cwF / 2 - fgw / 2;
+  const rgw = s.rdw * k, rgx = cx + cwF / 2 - rgw / 2;
+  const cut = (gx, gw, y) => { C.fillStyle = '#fff'; C.fillRect(gx, y - 0.4 * U, gw, Tk + 0.8 * U); ln(gx, y, gx, y + Tk, 0.4 * U, COL.geo); ln(gx + gw, y, gx + gw, y + Tk, 0.4 * U, COL.geo); };
+  cut(fgx, fgw, iy + ih);
+  if(thr) cut(rgx, rgw, oy);
+
+  // car
+  rect(cx, cy, cwF, cdF, COL.car, 0.4 * U);
+  const dash = [0.8 * U, 0.6 * U];
+  ln(fgx, cy + cdF, fgx, iy + ih, 0.18 * U, COL.geo, dash); ln(fgx + fgw, cy + cdF, fgx + fgw, iy + ih, 0.18 * U, COL.geo, dash);
+  planLeaves(fgx, fgw, iy + ih + Tk * 0.12, Tk * 0.22, 1);
+  if(thr){
+    ln(rgx, cy, rgx, iy, 0.18 * U, COL.geo, dash); ln(rgx + rgw, cy, rgx + rgw, iy, 0.18 * U, COL.geo, dash);
+    planLeaves(rgx, rgw, iy - Tk * 0.12, Tk * 0.22, -1);
+  }
+
+  // dimensions
+  const rowLine = i => oy - i * ROWH - 0.45 * FS;
+  if(thr){
+    dimH(rgx, rgx + rgw, rowLine(0), 'above', labels(s.rdw), [[rgx, oy], [rgx + rgw, oy]]);
+    dimH(ix, ix + iw, rowLine(1), 'above', labels(s.sw), [[ix, iy], [ix + iw, iy]]);
+  } else dimH(ix, ix + iw, rowLine(0), 'above', labels(s.sw), [[ix, iy], [ix + iw, iy]]);
+  dimV(ox + OW + 0.7 * FS, iy, iy + ih, 'right', Ls, [[ix + iw, iy], [ix + iw, iy + ih]]);
+  dimH(fgx, fgx + fgw, oy + OH + 0.45 * FS, 'below', labels(s.dw), [[fgx, oy + OH], [fgx + fgw, oy + OH]]);
+  dimH(cx, cx + cwF, cy + 0.75 * FS, 'below', labels(s.cw), null);
+  dimV(ox - 0.7 * FS, cy, cy + cdF, 'left', Lc, [[cx, cy], [cx, cy + cdF]]);
+}
+
+/* ---------- view 2: landing door elevation ---------- */
+function drawDoor(a){
+  const s = ST, f = Math.max(60, 0.07 * s.dw), e = 0.14 * s.dw, gh = 0.6 * FS;
+  const Lh = labels(s.dh), wH = tw(Lh);
+  const { k, ox, oy } = fit(a, s.dw + 2 * f + 2 * e, s.dh + f, 1.3 * FS + wH, 0.3 * FS, 0.4 * FS, ROWH + gh);
+  if(!(k > 0)) return;
+  const fk = f * k, x0 = ox + (e + f) * k, y0 = oy + fk, w = s.dw * k, h = s.dh * k, fl = y0 + h, MW = (s.dw + 2 * f + 2 * e) * k;
+  rect(x0 - fk, y0 - fk, w + 2 * fk, h + fk, COL.frame, 0.4 * U);
+  if(s.doorType === 'center'){
+    rect(x0, y0, w / 2, h, COL.door, 0.3 * U); rect(x0 + w / 2, y0, w / 2, h, COL.door, 0.3 * U);
+    const ym = y0 + h * 0.5, al = Math.min(w * 0.16, 1.6 * FS);
+    ln(x0 + w / 2 - 0.4 * FS, ym, x0 + w / 2 - 0.4 * FS - al, ym, 0.2 * U, COL.geo); arrowHead(x0 + w / 2 - 0.4 * FS - al, ym, Math.PI, COL.geo, 0.7);
+    ln(x0 + w / 2 + 0.4 * FS, ym, x0 + w / 2 + 0.4 * FS + al, ym, 0.2 * U, COL.geo); arrowHead(x0 + w / 2 + 0.4 * FS + al, ym, 0, COL.geo, 0.7);
+  } else {
+    rect(x0, y0, w * 0.5, h, COL.door, 0.3 * U); rect(x0 + w * 0.5, y0, w * 0.5, h, '#d7dce1', 0.3 * U);
+    const ym = y0 + h * 0.5, al = Math.min(w * 0.3, 2.4 * FS), xs = x0 + w * 0.75 + al / 2;
+    ln(xs, ym, xs - al, ym, 0.2 * U, COL.geo); arrowHead(xs - al, ym, Math.PI, COL.geo, 0.7);
+  }
+  C.save(); C.beginPath(); C.rect(ox, fl, MW, gh); C.clip(); hatch(ox, fl, MW, gh, 0.7 * U); C.restore();
+  ln(ox, fl, ox + MW, fl, 0.5 * U, COL.geo);
+  dimH(x0, x0 + w, fl + gh + 0.45 * FS, 'below', labels(s.dw), [[x0, fl], [x0 + w, fl]]);
+  dimV(x0 - fk - 0.7 * FS, y0, fl, 'left', Lh, [[x0, y0], [x0, fl]]);
+}
+
+/* ---------- view 3: car cabin (oblique) ---------- */
+function drawCabin(a){
+  const s = ST, dd = s.cd * 0.45, dx = dd * Math.cos(Math.PI / 6), dy = dd * Math.sin(Math.PI / 6);
+  const Lh = labels(s.ch), wH = tw(Lh);
+  const { k, ox, oy } = fit(a, s.cw + dx, s.ch + dy, 0.3 * FS, 1.3 * FS + wH, 0.4 * FS, 0.4 * FS);
+  if(!(k > 0)) return;
+  const fx = ox, fy = oy + dy * k, w = s.cw * k, h = s.ch * k, DX = dx * k, DY = dy * k;
+  const hd = [0.7 * U, 0.6 * U];
+  ln(fx + DX, fy - DY, fx + DX, fy + h - DY, 0.15 * U, COL.hatch, hd);
+  ln(fx + DX, fy + h - DY, fx, fy + h, 0.15 * U, COL.hatch, hd);
+  ln(fx + DX, fy + h - DY, fx + w + DX, fy + h - DY, 0.15 * U, COL.hatch, hd);
+  poly([[fx, fy], [fx + DX, fy - DY], [fx + w + DX, fy - DY], [fx + w, fy]], COL.top);
+  poly([[fx + w, fy], [fx + w + DX, fy - DY], [fx + w + DX, fy + h - DY], [fx + w, fy + h]], COL.side);
+  C.save(); C.globalAlpha = 0.85; poly([[fx, fy], [fx + w, fy], [fx + w, fy + h], [fx, fy + h]], COL.front); C.restore();
+  poly([[fx, fy], [fx + w, fy], [fx + w, fy + h], [fx, fy + h]], null);
+  const dw = Math.min(s.dw, s.cw) * k, dh = Math.min(s.dh, s.ch) * k, dxp = fx + (w - dw) / 2, dyp = fy + h - dh;
+  rect(dxp, dyp, dw, dh, COL.door, 0.28 * U);
+  const split = s.doorType === 'center' ? dxp + dw / 2 : dxp + dw * 0.5;
+  ln(split, dyp, split, dyp + dh, 0.22 * U, COL.geo);
+  const xe = fx + w + DX;
+  dimV(xe + 0.7 * FS, fy - DY, fy + h - DY, 'right', Lh, [[xe, fy - DY], [xe, fy + h - DY]]);
+}
+
+/* ---------- composition ---------- */
+function render(ctx, u, s){
+  C = ctx; U = u; ST = s; FS = s.fs * u; LH = FS * 1.16;
+  TB = (s.units === 'both' ? 2 : 1) * LH; ROWH = TB + 0.95 * FS;
+  const W = s.boxW * u, H = s.boxH * u;
+  C.save(); C.fillStyle = '#ffffff'; C.fillRect(0, 0, W, H);
+  const pad = 1.2 * u, gap = 2.5 * u, titleH = FS * 1.9;
+  let panels;
+  if(s.layout === 'row'){
+    const wts = [0.40, 0.25, 0.35], av = W - 2 * pad - 2 * gap; let x = pad;
+    panels = wts.map(f => { const p = { x, y: pad, w: av * f, h: H - 2 * pad }; x += av * f + gap; return p; });
+  } else {
+    const ah = (H - 2 * pad - 2 * gap) / 3;
+    panels = [0, 1, 2].map(i => ({ x: pad, y: pad + i * (ah + gap), w: W - 2 * pad, h: ah }));
+  }
+  const titles = [
+    s.opening === 'through' ? 'SHAFT PLAN · FRONT & REAR OPENING' : 'SHAFT PLAN',
+    'LANDING DOOR · ' + (s.doorType === 'center' ? 'CENTRE OPENING' : 'SIDE OPENING'),
+    'CAR CABIN · INSIDE HEIGHT'
+  ];
+  [drawPlan, drawDoor, drawCabin].forEach((fn, i) => {
+    const p = panels[i];
+    C.save(); fn({ x: p.x, y: p.y, w: p.w, h: p.h - titleH }); C.restore();
+    title(titles[i], p.x + p.w / 2, p.y + p.h - 0.5 * FS, p.w);
+  });
+  if(s.border){ C.lineWidth = 0.3 * u; C.strokeStyle = COL.geo; C.strokeRect(0.15 * u, 0.15 * u, W - 0.3 * u, H - 0.3 * u); }
+  C.restore();
+}
+
+/* ---------- PNG with physical dpi (pHYs chunk) ---------- */
+const CRC = (() => { const t = new Uint32Array(256); for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b){ let c = 0xFFFFFFFF; for(let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+async function withDpi(blob, dpi){
+  const src = new Uint8Array(await blob.arrayBuffer());
+  for(let i = 8; i < Math.min(src.length, 200); i++) if(src[i] === 0x70 && src[i+1] === 0x48 && src[i+2] === 0x59 && src[i+3] === 0x73) return blob;
+  const ppm = Math.round(dpi / 0.0254), ch = new Uint8Array(21), dv = new DataView(ch.buffer);
+  dv.setUint32(0, 9); ch.set([0x70, 0x48, 0x59, 0x73], 4); dv.setUint32(8, ppm); dv.setUint32(12, ppm); ch[16] = 1;
+  dv.setUint32(17, crc32(ch.subarray(4, 17)));
+  const out = new Uint8Array(src.length + 21); out.set(src.subarray(0, 33)); out.set(ch, 33); out.set(src.subarray(33), 54);
+  return new Blob([out], { type: 'image/png' });
+}
+async function makePng(s){
+  const u = s.dpi / 25.4, c = document.createElement('canvas');
+  c.width = Math.round(s.boxW * u); c.height = Math.round(s.boxH * u);
+  render(c.getContext('2d'), u, s);
+  const b = await new Promise(r => c.toBlob(r, 'image/png'));
+  return withDpi(b, s.dpi);
+}
+function fileName(s){
+  const ref = s.ref.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-');
+  return `${ref ? ref + '_' : ''}lift-layout_${s.sw}x${s.sd}_${s.opening === 'through' ? 'dual' : 'single'}.png`;
+}
+
+/* ---------- UI ---------- */
+function warnings(s){
+  const w = [];
+  if(s.cw >= s.sw) w.push('Car width is not smaller than the shaft width.');
+  if(s.cd >= s.sd) w.push('Car depth is not smaller than the shaft depth.');
+  if(s.dw > s.cw) w.push('Door width is wider than the car width.');
+  if(s.opening === 'through' && s.rdw > s.cw) w.push('Rear door width is wider than the car width.');
+  if(s.dh > s.ch) w.push('Door height is taller than the cabin height.');
+  return w;
+}
+let raf = 0;
+function draw(){
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(() => {
+    const s = getS(); saveState();
+    $('rdwField').hidden = s.opening !== 'through';
+    document.querySelectorAll('output[data-for]').forEach(o => { const v = parseFloat($(o.dataset.for).value) || 0; o.textContent = ftin(v); });
+    $('fsOut').textContent = s.fs.toFixed(1) + ' mm';
+    $('warns').innerHTML = ''; warnings(s).forEach(t => { const li = document.createElement('li'); li.textContent = t; $('warns').append(li); });
+    const u = s.dpi / 25.4;
+    $('meta').innerHTML = `<b>${s.boxW} × ${s.boxH} mm</b> · ${Math.round(s.boxW * u)} × ${Math.round(s.boxH * u)} px · ${s.dpi} dpi`;
+    const cv = $('cv'), cssW = $('sheet').clientWidth || 600, cssH = cssW * s.boxH / s.boxW, dpr = window.devicePixelRatio || 1;
+    cv.style.height = cssH + 'px'; cv.width = Math.round(cssW * dpr * 1.5); cv.height = Math.round(cssH * dpr * 1.5);
+    render(cv.getContext('2d'), cv.width / s.boxW, s);
+  });
+}
+
+let dlCap = null;
+const capReady = (async () => { try{ dlCap = window.claude && window.claude.use ? await window.claude.use('downloads') : null; }catch(e){ dlCap = null; } })();
+let fbUrl = null;
+function showFallback(blob){
+  if(fbUrl) URL.revokeObjectURL(fbUrl);
+  fbUrl = URL.createObjectURL(blob); $('fbImg').src = fbUrl; $('fallback').hidden = false;
+}
+$('dl').addEventListener('click', async () => {
+  const s = getS(), name = fileName(s), st = $('status'), btn = $('dl');
+  btn.disabled = true; st.className = 'status'; st.textContent = 'Rendering at ' + s.dpi + ' dpi…';
+  try{
+    const blob = await makePng(s);
+    await Promise.race([capReady, new Promise(r => setTimeout(r, 1500))]);
+    if(dlCap){
+      try{ await dlCap.save({ filename: name, data: blob }); st.className = 'status ok'; st.textContent = 'Saved ' + name; $('fallback').hidden = true; }
+      catch(e){
+        if(e && e.code === 'declined'){ st.textContent = 'Download cancelled.'; }
+        else if(e && e.code === 'rate_limited'){ st.textContent = 'A save prompt is already open. Try again in a moment.'; }
+        else { st.textContent = 'Direct download is not available here, so the image is shown below.'; showFallback(blob); }
+      }
+    } else if(!window.claude){
+      const a = document.createElement('a'), url = URL.createObjectURL(blob);
+      a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      st.className = 'status ok'; st.textContent = 'Downloaded ' + name;
+    } else { st.textContent = 'The image is shown below.'; showFallback(blob); }
+  }catch(e){ st.textContent = 'Could not render the image. Check the dimensions and try again.'; }
+  btn.disabled = false;
+});
+
+loadState();
+IDS.forEach(id => { $(id).addEventListener('input', draw); $(id).addEventListener('change', draw); });
+$('form').addEventListener('submit', e => e.preventDefault());
+new ResizeObserver(draw).observe($('sheet'));
+draw();
+if(document.fonts){ document.fonts.load('500 20px "IBM Plex Sans Condensed"').then(draw).catch(() => {}); document.fonts.ready.then(draw); }
+</script>
+
+</body>
+</html>
